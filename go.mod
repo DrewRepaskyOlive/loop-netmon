@@ -1,4 +1,4 @@
-module bitbucket.org/crosschx/loop-netmon
+module github.com/DrewRepaskyOlive/loop-netmon
 
 go 1.16
 

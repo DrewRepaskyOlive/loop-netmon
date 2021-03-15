@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"bitbucket.org/crosschx/loop-netmon/httpmon"
+	"github.com/DrewRepaskyOlive/loop-netmon/httpmon"
 
 	ldk "github.com/open-olive/loop-development-kit/ldk/go"
 )
