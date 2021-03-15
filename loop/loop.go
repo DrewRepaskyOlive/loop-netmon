@@ -10,18 +10,23 @@ import (
 	ldk "github.com/open-olive/loop-development-kit/ldk/go"
 )
 
+type Status struct {
+	URL     string
+	Success bool
+}
+
 type Loop struct {
 	ctx      context.Context
 	cancel   context.CancelFunc
 	logger   *ldk.Logger
 	sidekick ldk.Sidekick
 	checker  chan bool
+	statuses []Status
 }
 
 const (
 	loopName    = "loop-netmon"
 	refreshRate = 15 * time.Second
-	url         = "https://loop-library-apiqa.oliveai.com/api/health/status"
 )
 
 func Serve() error {
@@ -46,7 +51,12 @@ func (l *Loop) LoopStart(sidekick ldk.Sidekick) error {
 	l.ctx, l.cancel = context.WithCancel(context.Background())
 	l.sidekick = sidekick
 
-	httpmon.Schedule(l.CheckUp, refreshRate)
+	l.SendWhisper("Network Monitor Loop Started", "Copy any URL to start monitoring it")
+
+	l.statuses = []Status{
+		{URL: "http://localhost:8000", Success: true},
+	}
+	l.checker = httpmon.Schedule(l.CheckUp, refreshRate)
 	return nil
 }
 
@@ -59,19 +69,19 @@ func (l *Loop) LoopStop() error {
 	return nil
 }
 
-var currentStatus = true
-
 func (l *Loop) CheckUp() {
-	call := httpmon.IsURLUp(url)
-	l.logger.Info("checked URL status", "call", call)
-	l.SendWhisperCall(call)
+	for _, status := range l.statuses {
+		call := httpmon.IsURLUp(status.URL)
+		l.logger.Info("checked URL status", "call", call)
+		if status.Success == call.Success {
+			continue
+		}
+		status.Success = call.Success
+		l.SendWhisperCall(call)
+	}
 }
 
 func (l *Loop) SendWhisperCall(call *httpmon.Call) {
-	if currentStatus == call.Success {
-		return
-	}
-	currentStatus = call.Success
 	label := "Network Monitor: call failed"
 	if call.Success {
 		label = "Network Monitor: call succeeded"
