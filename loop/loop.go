@@ -21,7 +21,7 @@ type Loop struct {
 	logger   *ldk.Logger
 	sidekick ldk.Sidekick
 	checker  chan bool
-	statuses []Status
+	statuses []*Status
 }
 
 const (
@@ -51,9 +51,9 @@ func (l *Loop) LoopStart(sidekick ldk.Sidekick) error {
 	l.ctx, l.cancel = context.WithCancel(context.Background())
 	l.sidekick = sidekick
 
-	l.SendWhisper("Network Monitor Loop Started", "Copy any URL to start monitoring it")
+	l.SendWhisper("Network Monitor Loop Started", "# Copy any URL to start monitoring it")
 
-	l.statuses = []Status{
+	l.statuses = []*Status{
 		{URL: "http://localhost:8000", Success: true},
 	}
 	l.checker = httpmon.Schedule(l.CheckUp, refreshRate)
@@ -82,13 +82,18 @@ func (l *Loop) CheckUp() {
 }
 
 func (l *Loop) SendWhisperCall(call *httpmon.Call) {
-	label := "Network Monitor: call failed"
-	if call.Success {
-		label = "Network Monitor: call succeeded"
-	}
-	markdown := fmt.Sprintf(`Status change for %s
+	label := "⚠️ Network Monitor: call failed"
+
+	message := fmt.Sprintf("Error `%s`", call.Error)
+	markdown := fmt.Sprintf(`# URL %s is down  
+  
 %s
-`, call.URL, call.Error)
+`, call.URL, message)
+
+	if call.Success {
+		label = "✅ Network Monitor: call succeeded"
+		markdown = fmt.Sprintf("# URL %s is available", call.URL)
+	}
 
 	l.SendWhisper(label, markdown)
 }
