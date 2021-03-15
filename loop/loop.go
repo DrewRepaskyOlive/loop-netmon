@@ -63,15 +63,22 @@ func (l *Loop) ClipboardListener(text string, err error) {
 	}
 
 	l.statuses = append(l.statuses, &status)
+
 	l.logger.Info("started monitoring", "url", text)
+	l.SendWhisper("Network Monitor", fmt.Sprintf("I am now monitoring %s and will let you know if it becomes unavailable", text))
 }
+
+const initWhisper = `# Copy any URL to your clipboard to start monitoring it.  
+  
+For example, try copying https://oliveai.com/
+`
 
 func (l *Loop) LoopStart(sidekick ldk.Sidekick) error {
 	l.logger.Info("starting " + loopName)
 	l.ctx, l.cancel = context.WithCancel(context.Background())
 	l.sidekick = sidekick
 
-	l.SendWhisper("Network Monitor Loop Started", "# Copy any URL to start monitoring it")
+	l.SendWhisper("Network Monitor Loop Started", initWhisper)
 
 	l.checker = httpmon.Schedule(l.CheckUp, refreshRate)
 
