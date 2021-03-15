@@ -59,16 +59,34 @@ func (l *Loop) LoopStop() error {
 	return nil
 }
 
+var currentStatus = true
+
 func (l *Loop) CheckUp() {
 	call := httpmon.IsURLUp(url)
 	l.logger.Info("checked URL status", "call", call)
-	l.SendWhisper(call)
+	l.SendWhisperCall(call)
 }
 
-func (l *Loop) SendWhisper(call *httpmon.Call) {
+func (l *Loop) SendWhisperCall(call *httpmon.Call) {
+	if currentStatus == call.Success {
+		return
+	}
+	currentStatus = call.Success
+	label := "Network Monitor: call failed"
+	if call.Success {
+		label = "Network Monitor: call succeeded"
+	}
+	markdown := fmt.Sprintf(`Status change for %s
+%s
+`, call.URL, call.Error)
+
+	l.SendWhisper(label, markdown)
+}
+
+func (l *Loop) SendWhisper(label string, markdown string) {
 	whisper := ldk.WhisperContentMarkdown{
-		Label:    "Netmon",
-		Markdown: fmt.Sprintf("%v", call),
+		Label:    label,
+		Markdown: markdown,
 	}
 	go func() {
 		err := l.sidekick.Whisper().Markdown(l.ctx, &whisper)
