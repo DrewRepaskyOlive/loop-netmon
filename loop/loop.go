@@ -40,7 +40,7 @@ func Serve() error {
 }
 
 func NewLoop(logger *ldk.Logger) (*Loop, error) {
-	logger.Info("NewLoop called: " + loopName)
+	logger.Trace("NewLoop called: " + loopName)
 	return &Loop{
 		logger: logger,
 	}, nil
@@ -64,7 +64,7 @@ func (l *Loop) ClipboardListener(text string, err error) {
 
 	l.statuses = append(l.statuses, &status)
 
-	l.logger.Info("started monitoring", "url", text)
+	l.logger.Debug("started monitoring", "url", text)
 	l.SendWhisper("Network Monitor", fmt.Sprintf("I am now monitoring %s and will let you know if it becomes unavailable", text))
 }
 
@@ -74,7 +74,7 @@ For example, try copying https://oliveai.com/
 `
 
 func (l *Loop) LoopStart(sidekick ldk.Sidekick) error {
-	l.logger.Info("starting " + loopName)
+	l.logger.Trace("starting " + loopName)
 	l.ctx, l.cancel = context.WithCancel(context.Background())
 	l.sidekick = sidekick
 
@@ -90,7 +90,7 @@ func (l *Loop) LoopStart(sidekick ldk.Sidekick) error {
 }
 
 func (l *Loop) LoopStop() error {
-	l.logger.Info("stopping " + loopName)
+	l.logger.Trace("stopping " + loopName)
 	l.cancel()
 	if l.checker != nil {
 		close(l.checker)
