@@ -3,6 +3,7 @@ package httpmon
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -55,4 +56,11 @@ func Schedule(trigger func(), delay time.Duration) chan bool {
 		}
 	}()
 	return stop
+}
+
+// IsURL check if a string contains a URL
+// ref: https://stackoverflow.com/a/55551215
+func IsURL(str string) bool {
+	u, err := url.Parse(str)
+	return err == nil && u.Scheme != "" && u.Host != ""
 }

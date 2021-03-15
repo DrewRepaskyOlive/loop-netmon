@@ -46,6 +46,26 @@ func NewLoop(logger *ldk.Logger) (*Loop, error) {
 	}, nil
 }
 
+func (l *Loop) ClipboardListener(text string, err error) {
+	if err != nil {
+		l.logger.Error("received error in clipboard listener", "error", err)
+		return
+	}
+
+	if !httpmon.IsURL(text) {
+		l.logger.Debug("not a URL", "text", text)
+		return
+	}
+
+	status := Status{
+		URL:     text,
+		Success: true,
+	}
+
+	l.statuses = append(l.statuses, &status)
+	l.logger.Info("started monitoring", "url", text)
+}
+
 func (l *Loop) LoopStart(sidekick ldk.Sidekick) error {
 	l.logger.Info("starting " + loopName)
 	l.ctx, l.cancel = context.WithCancel(context.Background())
@@ -53,10 +73,12 @@ func (l *Loop) LoopStart(sidekick ldk.Sidekick) error {
 
 	l.SendWhisper("Network Monitor Loop Started", "# Copy any URL to start monitoring it")
 
-	l.statuses = []*Status{
-		{URL: "http://localhost:8000", Success: true},
-	}
 	l.checker = httpmon.Schedule(l.CheckUp, refreshRate)
+
+	err := l.sidekick.Clipboard().Listen(l.ctx, l.ClipboardListener)
+	if err != nil {
+		return fmt.Errorf("could not listen to clipboard: %w", err)
+	}
 	return nil
 }
 
