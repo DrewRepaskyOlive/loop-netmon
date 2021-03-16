@@ -10,3 +10,5 @@ build/windows-amd64/plugin:
 	     -o build/windows-amd64/plugin.exe
 
 build: clean build/darwin-amd64/plugin build/windows-amd64/plugin
+
+.PHONY: clean build build/darwin-amd64/plugin build/windows-amd64/plugin
